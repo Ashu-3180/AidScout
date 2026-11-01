@@ -31,3 +31,9 @@ class VerificationStatus(str, Enum):
 class CriterionValueStatus(str, Enum):
     known = "known"
     unknown = "unknown"
+
+
+class CriterionSupportStatus(str, Enum):
+    supported = "supported"
+    unknown = "unknown"
+    unsupported = "unsupported"

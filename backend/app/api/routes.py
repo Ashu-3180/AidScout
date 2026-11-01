@@ -20,8 +20,8 @@ def readiness(settings: Settings = Depends(get_settings)) -> dict[str, str]:
     if not settings.database_url:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database is not configured")
     try:
-        with build_engine().connect() as connection:
+        with build_engine(settings).connect() as connection:
             connection.execute(text("SELECT 1"))
-    except (RuntimeError, SQLAlchemyError):
+    except (RuntimeError, ValueError, SQLAlchemyError):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database is unavailable") from None
     return {"status": "ready"}

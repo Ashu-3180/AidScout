@@ -14,6 +14,8 @@ This is the Phase 1, Milestone 2 data foundation. It has no authentication, AI, 
 
 ## Operational boundaries
 
-`GET /health` never opens a database connection. `GET /ready` performs only `SELECT 1` when `DATABASE_URL` is set and returns a generic 503 otherwise. It never returns a connection string or underlying exception.
+`GET /health` never opens a database connection. `GET /ready` performs only `SELECT 1` when `DATABASE_URL` is set and returns a generic 503 otherwise. It uses bounded connection and statement timeouts and never returns a connection string or underlying exception.
+
+Alembic fails closed for online work when `DATABASE_URL` is absent. Offline SQL rendering uses the PostgreSQL dialect without a connection, which permits review of generated DDL before a database exists.
 
 The initial read API is intentionally deferred: a database has not been approved or provisioned for this project. Sessions are explicit and short-lived in `app.db.session`; future writes must use an explicit transaction boundary.

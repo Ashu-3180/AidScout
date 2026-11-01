@@ -4,7 +4,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
-from app.models.enums import CriterionValueStatus, CycleStatus, RecordStatus, SourceType, VerificationStatus
+from app.models.enums import CriterionSupportStatus, CriterionValueStatus, CycleStatus, RecordStatus, SourceType, VerificationStatus
+
+SUPPORTED_CRITERION_TYPES = frozenset({"academic_level", "academic_score", "category", "citizenship", "course", "gender", "income", "institution", "residency"})
 
 
 class ScholarshipCycleCreate(BaseModel):
@@ -23,6 +25,8 @@ class ScholarshipCycleCreate(BaseModel):
 
 
 class SourceEvidenceCreate(BaseModel):
+    scholarship_id: UUID
+    cycle_id: UUID | None = None
     source_url: HttpUrl
     publisher: str | None = Field(default=None, max_length=300)
     source_type: SourceType
@@ -32,12 +36,15 @@ class SourceEvidenceCreate(BaseModel):
 
 
 class EligibilityCriterionCreate(BaseModel):
+    scholarship_id: UUID
+    cycle_id: UUID | None = None
     criterion_type: str = Field(min_length=1, max_length=100)
     operator: str = Field(min_length=1, max_length=32)
     value: Any | None = None
     unit: str | None = Field(default=None, max_length=64)
     is_required: bool = True
     value_status: CriterionValueStatus = CriterionValueStatus.unknown
+    criterion_support_status: CriterionSupportStatus = CriterionSupportStatus.unknown
     source_evidence_id: UUID | None = None
     notes: str | None = None
 
@@ -47,6 +54,10 @@ class EligibilityCriterionCreate(BaseModel):
             raise ValueError("known criteria require a value")
         if self.value_status is CriterionValueStatus.unknown and self.value is not None:
             raise ValueError("unknown criteria must not include a value")
+        if self.criterion_support_status is CriterionSupportStatus.supported and self.criterion_type not in SUPPORTED_CRITERION_TYPES:
+            raise ValueError("supported criteria must use a recognized criterion_type")
+        if self.criterion_support_status is not CriterionSupportStatus.supported and self.value_status is not CriterionValueStatus.unknown:
+            raise ValueError("unknown or unsupported criteria must retain an unknown value")
         return self
 
 

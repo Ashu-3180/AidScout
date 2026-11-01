@@ -4,4 +4,6 @@ The data-quality service reports, rather than silently fixes: missing scholarshi
 
 Freshness is configurable through `VERIFICATION_FRESHNESS_DAYS` (default 90). A source is only considered stale when it is marked `verified` and its `checked_at` is missing or older than that threshold. A URL never changes verification status by itself.
 
+Criterion support and source verification are intentionally separate. A supported criterion with a known value is not verified, and neither known, unknown, nor unsupported criteria imply eligibility; a future deterministic eligibility engine must make that decision explicitly.
+
 The service works on snapshots and is covered by database-independent unit tests. Production review policy can change severity or add rules without changing the normalized records.

@@ -22,18 +22,22 @@ The reproducible pins are in `backend/requirements.txt`. Install them only into 
 
 ## PostgreSQL
 
-PostgreSQL 18 is installed locally and its Windows service is running. This milestone did not connect to, inspect, create, or modify any database. After an approved local database and Python 3.14 environment are available, configure a dedicated development database using an environment variable such as `DATABASE_URL`; do not put credentials in source control.
+PostgreSQL 18 is installed locally and its Windows service is running. This milestone did not connect to, inspect, create, or modify any database. After an approved local database and Python 3.14 environment are available, configure a dedicated development database using process environment variables; do not put credentials in source control. The application does not load a `.env` file automatically.
+
+`DATABASE_READINESS_TIMEOUT_SECONDS` bounds initial database connection attempts (default 3). `DATABASE_READINESS_STATEMENT_TIMEOUT_MILLISECONDS` bounds the readiness query after connection (default 3000).
+
+`AIDSCOUT_EXPECTED_DATABASE_NAME` defaults to `aidscout_dev`. Online Alembic execution rejects a URL without that configured database name before an engine is constructed. This is a safety guard, not a security boundary: always use a dedicated database and least-privilege AidScout role.
 
 ## Run checks
 
 ```powershell
 Set-Location E:\Projects\AidScout\backend
 & .\.venv\Scripts\python.exe -m pytest
-& .\.venv\Scripts\python.exe -m alembic check
+& .\.venv\Scripts\python.exe -m alembic upgrade head --sql
 ```
 
-`pytest` is database-independent. `alembic check` requires a dedicated configured database and must not be run against an existing database without explicit approval.
+`pytest` is database-independent. `alembic upgrade head --sql` renders SQL only and does not connect to PostgreSQL. Do not run `alembic upgrade head` until a dedicated database is approved.
 
 ## Next manual step
 
-Provision a dedicated local AidScout PostgreSQL database and a least-privilege local role, then set `DATABASE_URL` in an untracked `backend/.env`. Obtain explicit approval before running `alembic upgrade head`; no migration has been applied by this milestone.
+Provision a dedicated local AidScout PostgreSQL database and a least-privilege local role, then set `DATABASE_URL` in the process environment. Obtain explicit approval before running `alembic upgrade head`; no migration has been applied by this milestone.

@@ -4,17 +4,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings, require_database_url
 
 
-def build_engine() -> Engine:
-    settings = get_settings()
-    if not settings.database_url:
-        raise RuntimeError("Database is not configured")
+def build_engine(settings: Settings | None = None) -> Engine:
+    settings = settings or get_settings()
+    database_url = require_database_url(settings)
     return create_engine(
-        settings.database_url,
+        database_url,
         pool_pre_ping=True,
-        connect_args={"connect_timeout": settings.database_readiness_timeout_seconds},
+        connect_args={
+            "connect_timeout": settings.database_readiness_timeout_seconds,
+            "options": f"-c statement_timeout={settings.database_readiness_statement_timeout_milliseconds}",
+        },
     )
 
 

@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.db.base import Base
+from app.db.migration import build_online_connectable
 import app.models  # noqa: F401
 
 
@@ -16,21 +17,11 @@ if config.config_file_name:
 target_metadata = Base.metadata
 
 
-def get_database_url() -> str:
-    database_url = get_settings().database_url
-
-    if not database_url:
-        raise RuntimeError(
-            "DATABASE_URL is not configured. "
-            "Set DATABASE_URL in the backend environment before running migrations."
-        )
-
-    return database_url
-
-
 def run_migrations_offline() -> None:
+    settings = get_settings()
     context.configure(
-        url=get_database_url(),
+        url=settings.database_url,
+        dialect_name="postgresql",
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -42,11 +33,10 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section) or {}
-    configuration["sqlalchemy.url"] = get_database_url()
-
-    connectable = engine_from_config(
+    connectable = build_online_connectable(
+        get_settings(),
         configuration,
-        prefix="sqlalchemy.",
+        engine_from_config,
         poolclass=pool.NullPool,
     )
 
