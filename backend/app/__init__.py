@@ -1,0 +1,1 @@
+"""AidScout backend package."""
